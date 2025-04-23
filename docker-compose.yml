@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # Serviço do banco de dados PostgreSQL
+  postgres:
+    image: postgres:14
+    container_name: advogados-saas-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: advogados_user
+      POSTGRES_PASSWORD: advogados_password
+      POSTGRES_DB: advogados_saas
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - advogados-network
+
+  # Serviço de cache Redis
+  redis:
+    image: redis:alpine
+    container_name: advogados-saas-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - advogados-network
+
+  # Serviço do backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: advogados-saas-backend
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql://advogados_user:advogados_password@postgres:5432/advogados_saas
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: advogados_saas_jwt_secret_key_2025
+      PORT: 3001
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    networks:
+      - advogados-network
+
+  # Serviço do frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: advogados-saas-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:3001/api
+    ports:
+      - "3000:3000"
+    networks:
+      - advogados-network
+
+# Volumes para persistência de dados
+volumes:
+  postgres_data:
+  redis_data:
+
+# Rede para comunicação entre os serviços
+networks:
+  advogados-network:
+    driver: bridge

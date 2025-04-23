@@ -1,0 +1,59 @@
+# Arquivos e diretórios específicos do Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+.npm/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Diretórios de build
+/dist
+/build
+/.next/
+/out/
+
+# Arquivos de cache
+.cache/
+.parcel-cache/
+
+# Arquivos de log
+logs
+*.log
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de IDE e editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Arquivos de teste
+/coverage
+.nyc_output
+
+# Arquivos temporários
+tmp/
+temp/
+
+# Arquivos de prisma
+/prisma/migrations/
+/prisma/*.db
+
+# Arquivos de dependências
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Arquivos específicos do Docker
+.dockerignore

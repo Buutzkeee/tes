@@ -1,0 +1,240 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String              @id @default(uuid())
+  email             String              @unique
+  password          String
+  name              String
+  cpf               String              @unique
+  oabNumber         String              @unique
+  oabState          String
+  isActive          Boolean             @default(true)
+  isVerified        Boolean             @default(false)
+  role              Role                @default(LAWYER)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  subscription      Subscription?
+  clients           Client[]
+  processes         Process[]
+  documents         Document[]
+  appointments      Appointment[]
+  notifications     Notification[]
+  payments          Payment[]
+  aiChatHistory     AIChatHistory[]
+}
+
+model Subscription {
+  id                String              @id @default(uuid())
+  userId            String              @unique
+  user              User                @relation(fields: [userId], references: [id])
+  planId            String
+  plan              Plan                @relation(fields: [planId], references: [id])
+  status            SubscriptionStatus  @default(ACTIVE)
+  startDate         DateTime            @default(now())
+  endDate           DateTime?
+  stripeCustomerId  String?
+  stripeSubscriptionId String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model Plan {
+  id                String              @id @default(uuid())
+  name              String
+  description       String
+  price             Float
+  features          String[]
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  subscriptions     Subscription[]
+}
+
+model Client {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  name              String
+  cpf               String
+  email             String
+  phone             String
+  address           String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  processes         Process[]
+  documents         Document[]
+  appointments      Appointment[]
+}
+
+model Process {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  clientId          String
+  client            Client              @relation(fields: [clientId], references: [id])
+  number            String              @unique
+  court             String
+  type              String
+  status            ProcessStatus       @default(ACTIVE)
+  subject           String
+  description       String?
+  startDate         DateTime            @default(now())
+  endDate           DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  documents         Document[]
+  appointments      Appointment[]
+  deadlines         Deadline[]
+  aiAnalysis        AIProcessAnalysis?
+}
+
+model Document {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  clientId          String?
+  client            Client?             @relation(fields: [clientId], references: [id])
+  processId         String?
+  process           Process?            @relation(fields: [processId], references: [id])
+  title             String
+  type              DocumentType
+  filePath          String
+  fileSize          Int
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model Appointment {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  clientId          String?
+  client            Client?             @relation(fields: [clientId], references: [id])
+  processId         String?
+  process           Process?            @relation(fields: [processId], references: [id])
+  title             String
+  description       String?
+  date              DateTime
+  location          String?
+  isCompleted       Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model Deadline {
+  id                String              @id @default(uuid())
+  processId         String
+  process           Process             @relation(fields: [processId], references: [id])
+  title             String
+  description       String?
+  dueDate           DateTime
+  isCompleted       Boolean             @default(false)
+  priority          Priority            @default(MEDIUM)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model Notification {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  title             String
+  message           String
+  type              NotificationType
+  isRead            Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model Payment {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  amount            Float
+  status            PaymentStatus       @default(PENDING)
+  paymentMethod     String
+  stripePaymentId   String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model AIProcessAnalysis {
+  id                String              @id @default(uuid())
+  processId         String              @unique
+  process           Process             @relation(fields: [processId], references: [id])
+  summary           String
+  parties           String[]
+  keyDates          DateTime[]
+  recommendations   String[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model AIChatHistory {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  message           String
+  response          String
+  createdAt         DateTime            @default(now())
+}
+
+enum Role {
+  ADMIN
+  LAWYER
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  PENDING
+}
+
+enum ProcessStatus {
+  ACTIVE
+  CLOSED
+  SUSPENDED
+  ARCHIVED
+}
+
+enum DocumentType {
+  CONTRACT
+  PETITION
+  POWER_OF_ATTORNEY
+  EVIDENCE
+  DECISION
+  OTHER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  DEADLINE
+  APPOINTMENT
+  PAYMENT
+  SYSTEM
+  PROCESS_UPDATE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
